@@ -1,6 +1,6 @@
 ### Threat Response Get SHA256 Disposition
 
-This script queries the Threat Response API for the dispostion of a SHA256. If a SHA256 is not provided as a command line argument, the script will prompt for one. An access token will be generated as needed and written to disk for storage. If the token is not found or is invalid a new one will be generated automatically.
+This script queries the Threat Response API for the dispostion of a SHA256. If a SHA256 is not provided as a command line argument, the script will prompt for one. An access token will be generated as needed (not found or invalid) and written to disk. 
 
 ### Before using you must update the following
 - CLIENT_ID
