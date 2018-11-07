@@ -103,17 +103,12 @@ def main():
 
     for module in response_json['data']:
         module_name = module['module']
-        if module_name == 'AMP File Reputation':
-            if  module['data']['verdicts']['count'] > 0:
-                docs = module['data']['verdicts']['docs']
-                for doc in docs:
-                    disposition = doc['disposition']
-                    disposition_name = doc['disposition_name']
-            else:
-                disposition = 0
-                disposition_name = 'Unknown/Unseen'
-
-    print('{} {} {}'.format(disposition, disposition_name, sha256))
+        if 'verdicts' in module['data'] and module['data']['verdicts']['count'] > 0:
+            docs = module['data']['verdicts']['docs']
+            for doc in docs:
+                disposition = doc.get('disposition', 'No disposition provided')
+                disposition_name = doc.get('disposition_name', 'No name provided')
+            print('{:<23}{:<5}{:<13}{}'.format(module_name, disposition, disposition_name, sha256))
 
 if __name__ == '__main__':
     main()
