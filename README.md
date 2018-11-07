@@ -18,5 +18,7 @@ python get_sha256_disposition.py 630325cac09ac3fab908f903e3b00d0dadd5fdaa0875ed8
 ### Example script output:  
 ```
 python get_sha256_disposition.py 630325cac09ac3fab908f903e3b00d0dadd5fdaa0875ed8496fcbb97a558d0da
-2 Malicious 630325cac09ac3fab908f903e3b00d0dadd5fdaa0875ed8496fcbb97a558d0da
+AMP File Reputation    2    Malicious    630325cac09ac3fab908f903e3b00d0dadd5fdaa0875ed8496fcbb97a558d0da
+AMP Global Intel       2    Malicious    630325cac09ac3fab908f903e3b00d0dadd5fdaa0875ed8496fcbb97a558d0da
+VirusTotal             2    Malicious    630325cac09ac3fab908f903e3b00d0dadd5fdaa0875ed8496fcbb97a558d0da
 ```
