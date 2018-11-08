@@ -1,10 +1,11 @@
-import re
 import sys
 import json
 import requests
 
 CLIENT_ID = 'client-asdf12-34as-df12-34as-df1234asdf12'
 CLIENT_PASSWORD = 'asdf1234asdf1234asdf1234asdf1234asdf1234asdf1234asdf12'
+
+SESSION = requests.session()
 
 def generate_token():
     ''' Generate a new access token and write it to disk
@@ -18,7 +19,7 @@ def generate_token():
 
     response = requests.post(url, headers=headers, auth=(CLIENT_ID, CLIENT_PASSWORD), data=payload)
 
-    if need_new_token(response):
+    if unauthorized(response):
         sys.exit('Unable to generate new token!\nCheck your CLIENT_ID and CLIENT_PASSWORD')
 
     response_json = response.json()
@@ -27,78 +28,88 @@ def generate_token():
     with open('threat_response_token', 'w') as token_file:
         token_file.write(access_token)
 
-def post(sha256):
-    ''' Query the API for a SHA256
+def get_token():
+    ''' Get the access token from disk if it's not there generate a new one
     '''
-    enrich_url = 'https://visibility.amp.cisco.com/iroh/iroh-enrich/deliberate/observables'
-
     for i in range(2):
         while True:
             try:
                 with open('threat_response_token', 'r') as token_file:
                     access_token = token_file.read()
+                    return access_token
             except FileNotFoundError:
                 print('threat_response_token file not found, generating new token.')
                 generate_token()
             break
 
+def inspect(observable):
+    '''Inspect the provided obsrevable and determine it's type
+    '''
+    inspect_url = 'https://visibility.amp.cisco.com/iroh/iroh-inspect/inspect'
+
+    access_token = get_token()
+
     headers = {'Authorization':'Bearer {}'.format(access_token),
                'Content-Type':'application/json',
                'Accept':'application/json'}
 
-    observables_payload = [{'value': sha256, 'type': 'sha256'}]
-    observables_payload = json.dumps(observables_payload)
+    inspect_payload = {'content':observable}
+    inspect_payload = json.dumps(inspect_payload)
 
-    response = requests.post(enrich_url, headers=headers, data=observables_payload)
+    response = SESSION.post(inspect_url, headers=headers, data=inspect_payload)
+    return response
+
+def enrich(observable):
+    ''' Query the API for a observable
+    '''
+    enrich_url = 'https://visibility.amp.cisco.com/iroh/iroh-enrich/deliberate/observables'
+
+    access_token = get_token()
+
+    headers = {'Authorization':'Bearer {}'.format(access_token),
+               'Content-Type':'application/json',
+               'Accept':'application/json'}
+
+    response = SESSION.post(enrich_url, headers=headers, data=observable)
 
     return response
 
-def need_new_token(response):
+def unauthorized(response):
     ''' Check the status code of the response
     '''
     if response.status_code == 401:
         return True
     return False
 
-def query(sha256):
+def check_auth(function, param):
     ''' Query the API and validate authentication was successful
         If authentication fails, generate a new token and try again
     '''
-    response = post(sha256)
-    if need_new_token(response):
+    response = function(param)
+    if unauthorized(response):
         print('Auth failed, generating new token.')
         generate_token()
-        response = post(sha256)
+        return function(param)
     return response
 
-def ask_for_sha256():
-    '''Ask for SHA256
+def query(observable):
+    ''' Pass the functions and parameters to check_auth to query the API
+        Return the final response
     '''
-    while True:
-        reply = str(input('Enter a SHA256: ')).strip()
-        if validate_sha256(reply):
-            return reply
-        if not validate_sha256(reply):
-            print('Not a valid SHA256')
-
-def validate_sha256(sha256):
-    ''' Validate the SHA256
-    '''
-    match_obj = re.match(r"[a-fA-F0-9]{64}$", sha256)
-    return bool(match_obj)
+    response = check_auth(inspect, observable)
+    inspect_output = response.text
+    response = check_auth(enrich, inspect_output)
+    return response
 
 def main():
     ''' Main script logic
     '''
     try:
-        sha256 = sys.argv[1]
-        if not validate_sha256(sha256):
-            print('{} is not a valid SHA256'.format(sha256))
-            sha256 = ask_for_sha256()
+        observable = sys.argv[1]
     except IndexError:
-        sha256 = ask_for_sha256()
+        observable = input('Enter an observable: ')
 
-    response = query(sha256)
+    response = query(observable)
     response_json = response.json()
 
     for module in response_json['data']:
@@ -106,9 +117,13 @@ def main():
         if 'verdicts' in module['data'] and module['data']['verdicts']['count'] > 0:
             docs = module['data']['verdicts']['docs']
             for doc in docs:
-                disposition = doc.get('disposition', 'No disposition provided')
-                disposition_name = doc.get('disposition_name', 'No name provided')
-            print('{:<23}{:<5}{:<13}{}'.format(module_name, disposition, disposition_name, sha256))
+                observable_value = doc['observable']['value']
+                disposition = doc.get('disposition', 'None')
+                disposition_name = doc.get('disposition_name', 'None')
+                print('{:<23}{:<5}{:<13}{}'.format(module_name,
+                                                   disposition,
+                                                   disposition_name,
+                                                   observable_value))
 
 if __name__ == '__main__':
     main()
