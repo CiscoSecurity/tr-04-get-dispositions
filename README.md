@@ -1,6 +1,6 @@
 ### Threat Response Get Dispositions
 
-This script queries the Threat Response API for the dispostion of any observable. If an observable is not provided as a command line argument, the script will prompt for one. An access token will be generated as needed (not found or invalid) and written to disk. 
+This script queries the Threat Response API for the disposition of any observable. If an observable is not provided as a command line argument, the script will prompt for one. An access token will be generated as needed (not found or invalid) and written to disk. 
 
 ### Before using you must update the following
 - CLIENT_ID
