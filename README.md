@@ -1,3 +1,5 @@
+[![Gitter chat](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/CiscoSecurity/Threat-Response "Gitter chat")
+
 ### Threat Response Get Dispositions
 
 This script queries the Threat Response API for the disposition of any observable. If an observable is not provided as a command line argument, the script will prompt for one. An access token will be generated as needed (not found or invalid) and written to disk. 
