@@ -77,7 +77,7 @@ def enrich(observable):
 def unauthorized(response):
     ''' Check the status code of the response
     '''
-    if response.status_code == 401:
+    if response.status_code == 401 or response.status_code == 400:
         return True
     return False
 
